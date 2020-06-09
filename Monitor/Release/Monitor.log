@@ -1,0 +1,14 @@
+﻿C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Microsoft\VC\v160\Microsoft.CppBuild.targets(452,5): warning MSB8004: Intermediate Directory does not end with a trailing slash.  This build instance will add the slash as it is required to allow proper evaluation of the Intermediate Directory.
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Microsoft\VC\v160\Microsoft.CppBuild.targets(453,5): warning MSB8004: Output Directory does not end with a trailing slash.  This build instance will add the slash as it is required to allow proper evaluation of the Output Directory.
+  Monitor.cpp
+D:\Activities\University\6 semester\ToDoMS\Lab_2_Monitoring_events_in_processes\Hook-Inject\Monitor\Monitor.cpp(154,22): warning C4102: 'Exit_on_error_routine': unreferenced label
+C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Microsoft\VC\v160\Microsoft.CppBuild.targets(1278,5): warning MSB8012: TargetPath(D:\Activities\University\6 semester\ToDoMS\Lab_2_Monitoring_events_in_processes\Hook-Inject\Release\Monitor.exe) does not match the Linker's OutputFile property value (D:\Activities\University\6 semester\ToDoMS\Lab_2_Monitoring_events_in_processes\Hook-Inject\Obj\Monitor.exe). This may cause your project to build incorrectly. To correct this, please make sure that $(OutDir), $(TargetName) and $(TargetExt) property values match the value specified in %(Link.OutputFile).
+  Generating code
+  0 of 90 functions ( 0.0%) were compiled, the rest were copied from previous compilation.
+    0 functions were new in current compilation
+    0 functions had inline decision re-evaluated but remain unchanged
+  Finished generating code
+Monitor.obj : warning LNK4020: a type record in 'd:\activities\university\6 semester\todoms\lab_2_monitoring_events_in_processes\hook-inject\monitor\release\vc142.pdb' is corrupted; some symbols and types may not be accessible from the debugger
+  Monitor.vcxproj -> D:\Activities\University\6 semester\ToDoMS\Lab_2_Monitoring_events_in_processes\Hook-Inject\Release\Monitor.exe
+          1 file(s) copied.
+  The system cannot find the file specified.

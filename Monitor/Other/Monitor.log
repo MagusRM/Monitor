@@ -1,0 +1,7 @@
+﻿C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Microsoft\VC\v160\Microsoft.CppBuild.targets(453,5): warning MSB8004: Output Directory does not end with a trailing slash.  This build instance will add the slash as it is required to allow proper evaluation of the Output Directory.
+  Generating code
+  Previous IPDB not found, fall back to full compilation.
+  All 89 functions were compiled because no usable IPDB/IOBJ from previous compilation was found.
+  Finished generating code
+  Monitor.vcxproj -> D:\Activities\University\6 semester\ToDoMS\Lab_2_Monitoring_events_in_processes\Hook-Inject\Release\Monitor.exe
+          1 file(s) copied.
