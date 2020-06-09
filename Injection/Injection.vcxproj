@@ -20,9 +20,9 @@
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
-    <ProjectGuid>{919046BF-8B24-42BE-98C7-6C0A2DD48DDF}</ProjectGuid>
+    <ProjectGuid>{9F4C85DE-9C4E-4814-BFC4-6B6B3FFB7A36}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
-    <RootNamespace>Injector</RootNamespace>
+    <RootNamespace>Injection</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -70,18 +70,74 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <LinkIncremental>false</LinkIncremental>
-  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
+    <OutDir>$(SolutionDir)$(Configuration)</OutDir>
+    <IntDir>$(Configuration)</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
+    <OutDir>$(SolutionDir)$(Configuration)</OutDir>
+    <IntDir>$(Configuration)</IntDir>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <LinkIncremental>false</LinkIncremental>
+    <OutDir>$(SolutionDir)$(Configuration)</OutDir>
+    <IntDir>$(Configuration)</IntDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
+    <OutDir>$(SolutionDir)$(Configuration)</OutDir>
+    <IntDir>$(Configuration)</IntDir>
   </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>WIN32;_DEBUG;INJECTION_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableUAC>false</EnableUAC>
+      <OutputFile>$(SolutionDir)Obj\$(TargetName)$(TargetExt)</OutputFile>
+      <ProgramDatabaseFile>$(SolutionDir)Obj\$(TargetName).pdb</ProgramDatabaseFile>
+    </Link>
+    <PostBuildEvent>
+      <Command>IF not exist "$(Solutiondir)App\" (mkdir "$(Solutiondir)App\")
+copy "$(SolutionDir)Obj\$(TargetName)$(TargetExt)" "$(SolutionDir)App\"
+copy  "$(SolutionDir)App\$(TargetName)$(TargetExt)" "$(SolutionDir)Monitor\$(TargetName)$(TargetExt)"
+rmdir "$(SolutionDir)Release"
+rmdir "$(SolutionDir)Debug"</Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>_DEBUG;INJECTION_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableUAC>false</EnableUAC>
+      <OutputFile>$(SolutionDir)Obj\$(TargetName)$(TargetExt)</OutputFile>
+      <ProgramDatabaseFile>$(SolutionDir)Obj\$(TargetName).pdb</ProgramDatabaseFile>
+    </Link>
+    <PostBuildEvent>
+      <Command>IF not exist "$(Solutiondir)App\" (mkdir "$(Solutiondir)App\")
+copy "$(SolutionDir)Obj\$(TargetName)$(TargetExt)" "$(SolutionDir)App\"
+copy  "$(SolutionDir)App\$(TargetName)$(TargetExt)" "$(SolutionDir)Monitor\$(TargetName)$(TargetExt)"
+rmdir "$(SolutionDir)Release"
+rmdir "$(SolutionDir)Debug"</Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
@@ -89,7 +145,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>WIN32;NDEBUG;INJECTOR_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;INJECTION_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
     </ClCompile>
@@ -99,37 +155,16 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
+      <OutputFile>$(SolutionDir)Obj\$(TargetName)$(TargetExt)</OutputFile>
+      <ProgramDatabaseFile>$(SolutionDir)Obj\$(TargetName).pdb</ProgramDatabaseFile>
     </Link>
-  </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <ClCompile>
-      <PrecompiledHeader>NotUsing</PrecompiledHeader>
-      <WarningLevel>Level3</WarningLevel>
-      <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>WIN32;_DEBUG;INJECTOR_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <ConformanceMode>true</ConformanceMode>
-      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-    </ClCompile>
-    <Link>
-      <SubSystem>Windows</SubSystem>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
-      <EnableUAC>false</EnableUAC>
-    </Link>
-  </ItemDefinitionGroup>
-  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <ClCompile>
-      <PrecompiledHeader>NotUsing</PrecompiledHeader>
-      <WarningLevel>Level3</WarningLevel>
-      <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_DEBUG;INJECTOR_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <ConformanceMode>true</ConformanceMode>
-      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-    </ClCompile>
-    <Link>
-      <SubSystem>Windows</SubSystem>
-      <GenerateDebugInformation>true</GenerateDebugInformation>
-      <EnableUAC>false</EnableUAC>
-    </Link>
+    <PostBuildEvent>
+      <Command>IF not exist "$(Solutiondir)App\" (mkdir "$(Solutiondir)App\")
+copy "$(SolutionDir)Obj\$(TargetName)$(TargetExt)" "$(SolutionDir)App\"
+copy  "$(SolutionDir)App\$(TargetName)$(TargetExt)" "$(SolutionDir)Monitor\$(TargetName)$(TargetExt)"
+rmdir "$(SolutionDir)Release"
+rmdir "$(SolutionDir)Debug"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -138,7 +173,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>NDEBUG;INJECTOR_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;INJECTION_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
     </ClCompile>
@@ -148,7 +183,16 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
+      <OutputFile>$(SolutionDir)Obj\$(TargetName)$(TargetExt)</OutputFile>
+      <ProgramDatabaseFile>$(SolutionDir)Obj\$(TargetName).pdb</ProgramDatabaseFile>
     </Link>
+    <PostBuildEvent>
+      <Command>IF not exist "$(Solutiondir)App\" (mkdir "$(Solutiondir)App\")
+copy "$(SolutionDir)Obj\$(TargetName)$(TargetExt)" "$(SolutionDir)App\"
+copy  "$(SolutionDir)App\$(TargetName)$(TargetExt)" "$(SolutionDir)Monitor\$(TargetName)$(TargetExt)"
+rmdir "$(SolutionDir)Release"
+rmdir "$(SolutionDir)Debug"</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp" />
