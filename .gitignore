@@ -339,5 +339,5 @@ ASALocalRun/
 # BeatPulse healthcheck temp database
 healthchecksdb
 
-Monitor/Other
-App
+Monitor/Other/
+App/
