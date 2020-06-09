@@ -1,0 +1,1 @@
+Note: if target program runs under administrator then you should run Monitor.exe under adminitrator.
