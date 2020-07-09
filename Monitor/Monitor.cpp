@@ -9,8 +9,7 @@
 #define ENABLE_DBG_MSG 1
 #define PIPE_BUFFER_SIZE 1000
 #define DLL_NAME "\\Injection.dll" 
-
-LPVOID ptrAllocatedInOtherProcessMemory = NULL;
+#define PIPE_NAME L"\\\\.\\pipe\\hook-inject"
 
 using namespace std;
 
@@ -30,7 +29,7 @@ bool GetProccessID(string processName, DWORD& processId)
     hSnapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
     if (hSnapshot == INVALID_HANDLE_VALUE)
     {
-        printf("ERROR: GetProccessID: CreateToolhelp32Snapshot returned \
+        printf("[E]: GetProccessID: CreateToolhelp32Snapshot returned \
             invalid handle. Line = %d, GetLastError = %d\n", __LINE__, GetLastError());
         return false;
     }
@@ -44,7 +43,7 @@ bool GetProccessID(string processName, DWORD& processId)
     if (!Process32First(hSnapshot, &processEntry))
     {
         CloseHandle(hSnapshot);
-        printf("ERROR: GetProccessID: Process32First failed. Line = %d,  \
+        printf("[E]: GetProccessID: Process32First failed. Line = %d,  \
             GetLastError = %d\n", __LINE__, GetLastError());
         return false;
     }
@@ -70,17 +69,17 @@ bool GetProccessID(string processName, DWORD& processId)
 
     if (!isProccesFound)
     {
-        printf("ERROR: Process with name \"%s\" wasn't found.\n", processName.c_str());
+        printf("[E]: Process with name \"%s\" wasn't found.\n", processName.c_str());
         return false;
     }
 
     return true;
 }
 
-bool InjectDll(DWORD targetProcessID)
+bool InjectDll(DWORD targetProcessID, 
+    LPVOID& ptrAllocatedInOtherProcessMemory, HANDLE& hTargetProcess)
 {
     HANDLE hThreadID = INVALID_HANDLE_VALUE;
-    HANDLE hTargetProcess = INVALID_HANDLE_VALUE;
     HMODULE h_kernel32dll = NULL;
     LPVOID ptrLoadLibraryA = NULL;
     LPVOID ptrLoadLibraryA_args = NULL;
@@ -89,7 +88,7 @@ bool InjectDll(DWORD targetProcessID)
     hTargetProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, targetProcessID);
     if (hTargetProcess == NULL)
     {
-        printf("ERROR: InjectDll: OpenProcess failed. Line = %d,  \
+        printf("[E]: InjectDll: OpenProcess failed. Line = %d,  \
             GetLastError = %d\n", __LINE__, GetLastError());
         goto InjectDll_exit_routine;
     }
@@ -97,7 +96,7 @@ bool InjectDll(DWORD targetProcessID)
     h_kernel32dll = GetModuleHandleW(L"kernel32.dll");
     if (h_kernel32dll == NULL)
     {
-        printf("ERROR: InjectDll: GetModuleHandleW failed. Line = %d,  \
+        printf("[E]: InjectDll: GetModuleHandleW failed. Line = %d,  \
             GetLastError = %d\n", __LINE__, GetLastError());
         goto InjectDll_exit_routine;
     }
@@ -105,7 +104,7 @@ bool InjectDll(DWORD targetProcessID)
     ptrLoadLibraryA = GetProcAddress(h_kernel32dll, "LoadLibraryA");
     if (ptrLoadLibraryA == NULL)
     {
-        printf("ERROR: InjectDll: GetProcAddress failed. Line = %d,  \
+        printf("[E]: InjectDll: GetProcAddress failed. Line = %d,  \
             GetLastError = %d\n", __LINE__, GetLastError());
         goto InjectDll_exit_routine;
     }
@@ -114,29 +113,31 @@ bool InjectDll(DWORD targetProcessID)
     GetCurrentDirectoryA(sizeof(injectionDllFullPath), injectionDllFullPath);
     strcat(injectionDllFullPath, DLL_NAME);
 
+    if (ENABLE_DBG_MSG) { printf("[D]: Full path to injection dll = %s\n", injectionDllFullPath); }
+
     ptrLoadLibraryA_args = (LPVOID)VirtualAllocEx(hTargetProcess, NULL, 
-        strlen(injectionDllFullPath), MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
+        strlen(injectionDllFullPath) + 1, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
     ptrAllocatedInOtherProcessMemory = ptrLoadLibraryA_args;
     if (ptrLoadLibraryA_args == NULL)
     {
-        printf("ERROR: InjectDll: VirtualAllocEx failed. Line = %d,  \
+        printf("[E]: InjectDll: VirtualAllocEx failed. Line = %d,  \
             GetLastError = %d\n", __LINE__, GetLastError());
         goto InjectDll_exit_routine;
     }
 
     if (WriteProcessMemory(hTargetProcess, ptrLoadLibraryA_args, injectionDllFullPath, 
-        strlen(injectionDllFullPath), NULL) == NULL)
+        strlen(injectionDllFullPath) + 1, NULL) == NULL)
     {
-        printf("ERROR: InjectDll: WriteProcessMemory failed. Line = %d,  \
+        printf("[E]: InjectDll: WriteProcessMemory failed. Line = %d,  \
             GetLastError = %d\n", __LINE__, GetLastError());
         goto InjectDll_exit_routine;
     }
 
-    hThreadID = CreateRemoteThread(hTargetProcess, NULL, 0, (LPTHREAD_START_ROUTINE)LoadLibrary, 
+    hThreadID = CreateRemoteThread(hTargetProcess, NULL, 0, (LPTHREAD_START_ROUTINE)LoadLibraryA, 
         ptrLoadLibraryA_args, NULL, NULL);
     if (hThreadID == NULL)
     {
-        printf("ERROR: InjectDll: CreateRemoteThread failed. Line = %d, GetLastError = %d\n", 
+        printf("[E]: InjectDll: CreateRemoteThread failed. Line = %d, GetLastError = %d\n", 
             __LINE__, GetLastError());
         goto InjectDll_exit_routine;
     }
@@ -150,10 +151,6 @@ InjectDll_exit_routine:
         VirtualFreeEx(hTargetProcess, ptrLoadLibraryA_args, 0,
             MEM_RELEASE);
     }
-    if (hTargetProcess != INVALID_HANDLE_VALUE)
-    {
-        CloseHandle(hTargetProcess);
-    }
     if (h_kernel32dll != INVALID_HANDLE_VALUE)
     {
         FreeLibrary(h_kernel32dll);
@@ -162,9 +159,9 @@ InjectDll_exit_routine:
     {
         FreeLibrary(h_kernel32dll);
     }
-
     if (isInjectionSuccessful)
     {
+        if (ENABLE_DBG_MSG) { printf("[D]: DLL is injected.\n"); }
         return true;
     }
     else
@@ -174,10 +171,10 @@ InjectDll_exit_routine:
 }
 
 int main(int argc, char* argv[])
-{
+{ 
     if (argc != 5)
     {
-       printf("ERROR: Wrong arguments quantity.\n");
+       printf("[E]: Wrong arguments quantity.\n");
        return 0;
     }
 
@@ -186,7 +183,7 @@ int main(int argc, char* argv[])
     {
         if (!GetProccessID(argv[2], targetProcessPid))
         {
-            printf("ERROR: main: GetProccessID failed. Line = %d\n", __LINE__);
+            printf("[E]: main: GetProccessID failed. Line = %d\n", __LINE__);
             return 0;
         }
     }
@@ -196,14 +193,14 @@ int main(int argc, char* argv[])
     }
     else
     {
-        printf("ERROR: Wrong first argument type.\n");
+        printf("[E]: Wrong first argument type.\n");
         return 0;
     }
 
-    if (ENABLE_DBG_MSG) { printf("DEBUG: process ID = %u\n", targetProcessPid); }
+    if (ENABLE_DBG_MSG) { printf("[D]: process ID = %u\n", targetProcessPid); }
 
     HANDLE hPipe;
-    LPCTSTR pipeName = L"\\\\.\\pipe\\hook-inject";
+    LPCTSTR pipeName = PIPE_NAME;
     hPipe = CreateNamedPipe(pipeName, 
                             PIPE_ACCESS_DUPLEX, 
                             PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE | PIPE_WAIT, 
@@ -214,20 +211,50 @@ int main(int argc, char* argv[])
                             NULL);
     if (hPipe == INVALID_HANDLE_VALUE)
     {
-        printf("ERROR: main: CreateNamedPipe returned invalid handle. Line = %d, \
+        printf("[E]: main: CreateNamedPipe returned invalid handle. Line = %d, \
+            GetLastError = %d\n", __LINE__, GetLastError());
+        return 0;
+    }
+
+    if (ENABLE_DBG_MSG) { printf("[D]: Pipe created.\n"); }
+
+    LPVOID ptrAllocatedInOtherProcessMemory = NULL;
+    HANDLE hTargetProcess = INVALID_HANDLE_VALUE;
+    if (!InjectDll(targetProcessPid, ptrAllocatedInOtherProcessMemory, hTargetProcess))
+    {
+        printf("[E]: main: InjectDll failed. Line = %d\n", __LINE__);
+        CloseHandle(hPipe);
+        return 0;
+    }
+
+    if (!ConnectNamedPipe(hPipe, NULL))
+    {
+        printf("[E]: main: ConnectNamedPipe failed. Line = %d  \
             GetLastError = %d\n", __LINE__, GetLastError());
         CloseHandle(hPipe);
         return 0;
     }
 
-    if (!InjectDll(targetProcessPid))
+    VirtualFreeEx(hTargetProcess, ptrAllocatedInOtherProcessMemory, 0, MEM_RELEASE);
+    CloseHandle(hTargetProcess);
+
+    printf("[*] Injection.dll connected to Monitor.exe via pipe.\n");
+
+    BYTE pipeBuffer[PIPE_BUFFER_SIZE] = { 0 };
+
+    DWORD numberOfBytesRead;
+    if (!ReadFile(hPipe, pipeBuffer, PIPE_BUFFER_SIZE * sizeof(BYTE), &numberOfBytesRead, NULL))
     {
-        printf("ERROR: main: InjectDll failed. Line = %d\n", __LINE__);
+        printf("[E]: main: ReadFile failed. Line = %d  \
+            GetLastError = %d\n", __LINE__, GetLastError());
         CloseHandle(hPipe);
         return 0;
     }
 
-    _getch();
+    printf("Message from DLL: \"%s\"\n", pipeBuffer);
+
     CloseHandle(hPipe);
+
+    return 0;
 }
 
