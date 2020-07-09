@@ -11,6 +11,12 @@
 #define DLL_NAME "\\Injection.dll" 
 #define PIPE_NAME L"\\\\.\\pipe\\hook-inject"
 
+enum class ProgrammMode
+{
+    kTrackCallOfFunction,
+    kHideFileFromProcess
+};
+
 using namespace std;
 
 bool GetProccessID(string processName, DWORD& processId)
@@ -76,8 +82,8 @@ bool GetProccessID(string processName, DWORD& processId)
     return true;
 }
 
-bool InjectDll(DWORD targetProcessID, 
-    LPVOID& ptrAllocatedInOtherProcessMemory, HANDLE& hTargetProcess)
+bool InjectDll( IN DWORD targetProcessID, 
+                OUT LPVOID& ptrAllocatedInOtherProcessMemory, HANDLE& hTargetProcess)
 {
     HANDLE hThreadID = INVALID_HANDLE_VALUE;
     HMODULE h_kernel32dll = NULL;
@@ -170,21 +176,21 @@ InjectDll_exit_routine:
     }
 }
 
-int main(int argc, char* argv[])
-{ 
+bool SanitizeAndProcessCmdArgs( IN int& argc, char**& argv,
+                                OUT DWORD& targetProcessPid, enum class ProgrammMode& programmMode, string& functionName, string& fileName)
+{
     if (argc != 5)
     {
-       printf("[E]: Wrong arguments quantity.\n");
-       return 0;
+        printf("[E]: Wrong arguments quantity.\n");
+        return false;
     }
 
-    DWORD targetProcessPid = 0;
     if (argv[1] == string("-name"))
     {
         if (!GetProccessID(argv[2], targetProcessPid))
         {
             printf("[E]: main: GetProccessID failed. Line = %d\n", __LINE__);
-            return 0;
+            return false;
         }
     }
     else if (argv[1] == string("-pid"))
@@ -194,14 +200,61 @@ int main(int argc, char* argv[])
     else
     {
         printf("[E]: Wrong first argument type.\n");
+        return false;
+    }
+
+    if (ENABLE_DBG_MSG) { printf("[D]: Target process ID = %u\n", targetProcessPid); }
+
+    if (argv[3] == string("-func"))
+    {
+        programmMode = ProgrammMode::kTrackCallOfFunction;
+        functionName = string(argv[4]);
+
+        if (ENABLE_DBG_MSG) { printf("[D]: Programm mode = kTrackCallOfFunction, function name = %s \n", functionName.c_str()); }
+
+    }
+    else if (argv[3] == string("-hide"))
+    {
+        programmMode = ProgrammMode::kHideFileFromProcess;
+        fileName = string(argv[4]);
+
+        if (ENABLE_DBG_MSG) { printf("[D]: Programm mode = hideFileFromProcess, file name = %s \n", fileName.c_str()); }
+    }
+    else
+    {
+        printf("[E]: Wrong third argument type.\n");
+        return false;
+    }
+
+    return true;
+}
+
+bool EstablishConnectionWitInjectionDll(HANDLE& hPipe, LPCTSTR& pipeName)
+{
+
+    return true;
+}
+
+int main(int argc, char* argv[])
+{ 
+    DWORD targetProcessPid = 0;
+    enum class ProgrammMode programmMode;
+    string functionName = "";
+    string fileName = "";
+    if (!SanitizeAndProcessCmdArgs(argc, argv, 
+                                   targetProcessPid, programmMode, functionName, fileName))
+    {
         return 0;
     }
 
-    if (ENABLE_DBG_MSG) { printf("[D]: process ID = %u\n", targetProcessPid); }
-
     HANDLE hPipe;
     LPCTSTR pipeName = PIPE_NAME;
-    hPipe = CreateNamedPipe(pipeName, 
+    if (!EstablishConnectionWitInjectionDll(hPipe, pipeName))
+    {
+        return 0;
+    }
+
+    /*hPipe = CreateNamedPipe(pipeName, 
                             PIPE_ACCESS_DUPLEX, 
                             PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE | PIPE_WAIT, 
                             PIPE_UNLIMITED_INSTANCES, 
@@ -216,7 +269,7 @@ int main(int argc, char* argv[])
         return 0;
     }
 
-    if (ENABLE_DBG_MSG) { printf("[D]: Pipe created.\n"); }
+    if (ENABLE_DBG_MSG) { printf("[D]: Pipe created.\n"); }*/
 
     LPVOID ptrAllocatedInOtherProcessMemory = NULL;
     HANDLE hTargetProcess = INVALID_HANDLE_VALUE;
@@ -226,6 +279,23 @@ int main(int argc, char* argv[])
         CloseHandle(hPipe);
         return 0;
     }
+
+    hPipe = CreateNamedPipe(pipeName,
+        PIPE_ACCESS_DUPLEX,
+        PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE | PIPE_WAIT,
+        PIPE_UNLIMITED_INSTANCES,
+        PIPE_BUFFER_SIZE,
+        PIPE_BUFFER_SIZE,
+        0,
+        NULL);
+    if (hPipe == INVALID_HANDLE_VALUE)
+    {
+        printf("[E]: main: CreateNamedPipe returned invalid handle. Line = %d, \
+            GetLastError = %d\n", __LINE__, GetLastError());
+        return 0;
+    }
+
+    if (ENABLE_DBG_MSG) { printf("[D]: Pipe created.\n"); }
 
     if (!ConnectNamedPipe(hPipe, NULL))
     {
@@ -240,18 +310,26 @@ int main(int argc, char* argv[])
 
     printf("[*] Injection.dll connected to Monitor.exe via pipe.\n");
 
-    BYTE pipeBuffer[PIPE_BUFFER_SIZE] = { 0 };
+    //BYTE pipeBuffer[PIPE_BUFFER_SIZE] = { 0 };
 
-    DWORD numberOfBytesRead;
-    if (!ReadFile(hPipe, pipeBuffer, PIPE_BUFFER_SIZE * sizeof(BYTE), &numberOfBytesRead, NULL))
-    {
-        printf("[E]: main: ReadFile failed. Line = %d  \
-            GetLastError = %d\n", __LINE__, GetLastError());
-        CloseHandle(hPipe);
-        return 0;
-    }
+    //DWORD numberOfBytesRead;
+    //if (!ReadFile(hPipe, pipeBuffer, PIPE_BUFFER_SIZE * sizeof(BYTE), &numberOfBytesRead, NULL))
+    //{
+    //    printf("[E]: main: ReadFile failed. Line = %d  \
+    //        GetLastError = %d\n", __LINE__, GetLastError());
+    //    CloseHandle(hPipe);
+    //    return 0;
+    //}
 
-    printf("Message from DLL: \"%s\"\n", pipeBuffer);
+    //if (!(string((char*)pipeBuffer) == "Injections.dll is connected via pipe."))
+    //{
+    //    printf("[E]: main: Incorrect initial message from Injection.dll via pipe. Line = %d  \
+    //        GetLastError = %d\n", __LINE__, GetLastError());
+    //    CloseHandle(hPipe);
+    //    return 0;
+    //}
+
+    //printf("[*] Injections.dll initial message ois correct.\n");
 
     CloseHandle(hPipe);
 

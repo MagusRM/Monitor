@@ -37,16 +37,17 @@ BOOL APIENTRY DllMain(HMODULE hModule,
             return false;
         }
 
-        LPCSTR testMsg = "Testing pipe.";
-        DWORD numberOfBytesWritten;
-        if (!WriteFile(hPipe, testMsg, lstrlenA(testMsg) + 1, &numberOfBytesWritten, NULL))
-        {
-            MessageBox(NULL, (LPCWSTR)L"[E]: DllMain: Cant't write to the pipe.",
-                (LPCWSTR)L"Injection.dll", MB_ICONERROR);
-            CloseHandle(hPipe);
-            return false;
-        }       
+        //LPCSTR initialMsg = "Injections.dll is connected via pipe.";
+        //DWORD numberOfBytesWritten;
+        //if (!WriteFile(hPipe, initialMsg, lstrlenA(initialMsg) + 1, &numberOfBytesWritten, NULL))
+        //{
+        //    MessageBox(NULL, (LPCWSTR)L"[E]: DllMain: Cant't write to the pipe.",
+        //        (LPCWSTR)L"Injection.dll", MB_ICONERROR);
+        //    CloseHandle(hPipe);
+        //    return false;
+        //}       
         
+
     }
 
     return true;
