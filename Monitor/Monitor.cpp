@@ -229,10 +229,40 @@ bool SanitizeAndProcessCmdArgs( IN int& argc, char**& argv,
     return true;
 }
 
-bool EstablishConnectionWitInjectionDll(HANDLE& hPipe, LPCTSTR& pipeName)
+bool EstablishConnectionWithInjectionDll(HANDLE& hPipe, LPCTSTR& pipeName)
 {
+    hPipe = CreateNamedPipe(pipeName,
+        PIPE_ACCESS_DUPLEX,
+        PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE | PIPE_WAIT,
+        PIPE_UNLIMITED_INSTANCES,
+        PIPE_BUFFER_SIZE,
+        PIPE_BUFFER_SIZE,
+        0,
+        NULL);
+    if (hPipe == INVALID_HANDLE_VALUE)
+    {
+        printf("[E]: main: CreateNamedPipe returned invalid handle. Line = %d, \
+            GetLastError = %d\n", __LINE__, GetLastError());
+        return false;
+    }
+
+    if (ENABLE_DBG_MSG) { printf("[D]: Pipe created.\n"); }
+
+    if (!ConnectNamedPipe(hPipe, NULL))
+    {
+        printf("[E]: main: ConnectNamedPipe failed. Line = %d  \
+            GetLastError = %d\n", __LINE__, GetLastError());
+        CloseHandle(hPipe);
+        return false;
+    }
 
     return true;
+}
+
+void ReleaseResourcesAssociatedWithTargetProcess(LPVOID& ptrAllocatedInOtherProcessMemory,HANDLE& hTargetProcess)
+{
+    VirtualFreeEx(hTargetProcess, ptrAllocatedInOtherProcessMemory, 0, MEM_RELEASE);
+    CloseHandle(hTargetProcess);
 }
 
 int main(int argc, char* argv[])
@@ -247,30 +277,6 @@ int main(int argc, char* argv[])
         return 0;
     }
 
-    HANDLE hPipe;
-    LPCTSTR pipeName = PIPE_NAME;
-    if (!EstablishConnectionWitInjectionDll(hPipe, pipeName))
-    {
-        return 0;
-    }
-
-    /*hPipe = CreateNamedPipe(pipeName, 
-                            PIPE_ACCESS_DUPLEX, 
-                            PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE | PIPE_WAIT, 
-                            PIPE_UNLIMITED_INSTANCES, 
-                            PIPE_BUFFER_SIZE,
-                            PIPE_BUFFER_SIZE,
-                            0, 
-                            NULL);
-    if (hPipe == INVALID_HANDLE_VALUE)
-    {
-        printf("[E]: main: CreateNamedPipe returned invalid handle. Line = %d, \
-            GetLastError = %d\n", __LINE__, GetLastError());
-        return 0;
-    }
-
-    if (ENABLE_DBG_MSG) { printf("[D]: Pipe created.\n"); }*/
-
     LPVOID ptrAllocatedInOtherProcessMemory = NULL;
     HANDLE hTargetProcess = INVALID_HANDLE_VALUE;
     if (!InjectDll(targetProcessPid, ptrAllocatedInOtherProcessMemory, hTargetProcess))
@@ -280,56 +286,19 @@ int main(int argc, char* argv[])
         return 0;
     }
 
-    hPipe = CreateNamedPipe(pipeName,
-        PIPE_ACCESS_DUPLEX,
-        PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE | PIPE_WAIT,
-        PIPE_UNLIMITED_INSTANCES,
-        PIPE_BUFFER_SIZE,
-        PIPE_BUFFER_SIZE,
-        0,
-        NULL);
-    if (hPipe == INVALID_HANDLE_VALUE)
+    HANDLE hPipe;
+    LPCTSTR pipeName = PIPE_NAME;
+    if (!EstablishConnectionWithInjectionDll(hPipe, pipeName))
     {
-        printf("[E]: main: CreateNamedPipe returned invalid handle. Line = %d, \
-            GetLastError = %d\n", __LINE__, GetLastError());
+        ReleaseResourcesAssociatedWithTargetProcess(hTargetProcess, ptrAllocatedInOtherProcessMemory);
         return 0;
     }
 
-    if (ENABLE_DBG_MSG) { printf("[D]: Pipe created.\n"); }
-
-    if (!ConnectNamedPipe(hPipe, NULL))
-    {
-        printf("[E]: main: ConnectNamedPipe failed. Line = %d  \
-            GetLastError = %d\n", __LINE__, GetLastError());
-        CloseHandle(hPipe);
-        return 0;
-    }
-
-    VirtualFreeEx(hTargetProcess, ptrAllocatedInOtherProcessMemory, 0, MEM_RELEASE);
-    CloseHandle(hTargetProcess);
+    ReleaseResourcesAssociatedWithTargetProcess(hTargetProcess, ptrAllocatedInOtherProcessMemory);
 
     printf("[*] Injection.dll connected to Monitor.exe via pipe.\n");
 
-    //BYTE pipeBuffer[PIPE_BUFFER_SIZE] = { 0 };
 
-    //DWORD numberOfBytesRead;
-    //if (!ReadFile(hPipe, pipeBuffer, PIPE_BUFFER_SIZE * sizeof(BYTE), &numberOfBytesRead, NULL))
-    //{
-    //    printf("[E]: main: ReadFile failed. Line = %d  \
-    //        GetLastError = %d\n", __LINE__, GetLastError());
-    //    CloseHandle(hPipe);
-    //    return 0;
-    //}
-
-    //if (!(string((char*)pipeBuffer) == "Injections.dll is connected via pipe."))
-    //{
-    //    printf("[E]: main: Incorrect initial message from Injection.dll via pipe. Line = %d  \
-    //        GetLastError = %d\n", __LINE__, GetLastError());
-    //    CloseHandle(hPipe);
-    //    return 0;
-    //}
-
-    //printf("[*] Injections.dll initial message ois correct.\n");
 
     CloseHandle(hPipe);
 
