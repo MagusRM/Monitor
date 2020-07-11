@@ -193,6 +193,9 @@ rmdir "$(SolutionDir)Debug"</Command>
   <ItemGroup>
     <ClCompile Include="Monitor.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\Hook-Inject.h" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

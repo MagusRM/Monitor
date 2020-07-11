@@ -5,17 +5,11 @@
 #include <Windows.h>
 #include <tlhelp32.h>
 #include <comdef.h>
+#include <string.h>
 
-#define ENABLE_DBG_MSG 1
-#define PIPE_BUFFER_SIZE 1000
+#include "../Hook-Inject.h"
+
 #define DLL_NAME "\\Injection.dll" 
-#define PIPE_NAME L"\\\\.\\pipe\\hook-inject"
-
-enum class ProgrammMode
-{
-    kTrackCallOfFunction,
-    kHideFileFromProcess
-};
 
 using namespace std;
 
@@ -88,8 +82,9 @@ bool InjectDll( IN DWORD targetProcessID,
     HANDLE hThreadID = INVALID_HANDLE_VALUE;
     HMODULE h_kernel32dll = NULL;
     LPVOID ptrLoadLibraryA = NULL;
-    LPVOID ptrLoadLibraryA_args = NULL;
     bool isInjectionSuccessful = false;
+
+    ptrAllocatedInOtherProcessMemory = NULL;
 
     hTargetProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, targetProcessID);
     if (hTargetProcess == NULL)
@@ -121,17 +116,16 @@ bool InjectDll( IN DWORD targetProcessID,
 
     if (ENABLE_DBG_MSG) { printf("[D]: Full path to injection dll = %s\n", injectionDllFullPath); }
 
-    ptrLoadLibraryA_args = (LPVOID)VirtualAllocEx(hTargetProcess, NULL, 
+    ptrAllocatedInOtherProcessMemory = (LPVOID)VirtualAllocEx(hTargetProcess, NULL,
         strlen(injectionDllFullPath) + 1, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
-    ptrAllocatedInOtherProcessMemory = ptrLoadLibraryA_args;
-    if (ptrLoadLibraryA_args == NULL)
+    if (ptrAllocatedInOtherProcessMemory == NULL)
     {
         printf("[E]: InjectDll: VirtualAllocEx failed. Line = %d,  \
             GetLastError = %d\n", __LINE__, GetLastError());
         goto InjectDll_exit_routine;
     }
 
-    if (WriteProcessMemory(hTargetProcess, ptrLoadLibraryA_args, injectionDllFullPath, 
+    if (WriteProcessMemory(hTargetProcess, ptrAllocatedInOtherProcessMemory, injectionDllFullPath,
         strlen(injectionDllFullPath) + 1, NULL) == NULL)
     {
         printf("[E]: InjectDll: WriteProcessMemory failed. Line = %d,  \
@@ -140,7 +134,7 @@ bool InjectDll( IN DWORD targetProcessID,
     }
 
     hThreadID = CreateRemoteThread(hTargetProcess, NULL, 0, (LPTHREAD_START_ROUTINE)LoadLibraryA, 
-        ptrLoadLibraryA_args, NULL, NULL);
+        ptrAllocatedInOtherProcessMemory, NULL, NULL);
     if (hThreadID == NULL)
     {
         printf("[E]: InjectDll: CreateRemoteThread failed. Line = %d, GetLastError = %d\n", 
@@ -152,9 +146,9 @@ bool InjectDll( IN DWORD targetProcessID,
 
 InjectDll_exit_routine:
 
-    if (ptrLoadLibraryA_args != NULL && !isInjectionSuccessful)
+    if ((ptrAllocatedInOtherProcessMemory != NULL) && (!isInjectionSuccessful))
     {
-        VirtualFreeEx(hTargetProcess, ptrLoadLibraryA_args, 0,
+        VirtualFreeEx(hTargetProcess, ptrAllocatedInOtherProcessMemory, 0,
             MEM_RELEASE);
     }
     if (h_kernel32dll != INVALID_HANDLE_VALUE)
@@ -229,9 +223,28 @@ bool SanitizeAndProcessCmdArgs( IN int& argc, char**& argv,
     return true;
 }
 
-bool EstablishConnectionWithInjectionDll(HANDLE& hPipe, LPCTSTR& pipeName)
+
+void ReleaseResourcesAssociatedWithTargetProcess(LPVOID& ptrAllocatedInOtherProcessMemory,HANDLE& hTargetProcess)
 {
-    hPipe = CreateNamedPipe(pipeName,
+    // Doesn't work but why?
+    /*VirtualFreeEx(hTargetProcess, ptrAllocatedInOtherProcessMemory, 0, MEM_RELEASE);
+    CloseHandle(hTargetProcess);*/
+}
+
+int main(int argc, char* argv[])
+{ 
+    DWORD targetProcessPid = 0;
+    enum class ProgrammMode programmMode;
+    string functionName = "";
+    string fileName = "";
+    if (!SanitizeAndProcessCmdArgs(argc, argv, 
+                                   targetProcessPid, programmMode, functionName, fileName))
+    {
+        return 0;
+    }
+
+    LPCTSTR pipeName = TEXT(PIPE_NAME);
+    HANDLE hPipe = CreateNamedPipe(pipeName,
         PIPE_ACCESS_DUPLEX,
         PIPE_TYPE_MESSAGE | PIPE_READMODE_MESSAGE | PIPE_WAIT,
         PIPE_UNLIMITED_INSTANCES,
@@ -248,35 +261,6 @@ bool EstablishConnectionWithInjectionDll(HANDLE& hPipe, LPCTSTR& pipeName)
 
     if (ENABLE_DBG_MSG) { printf("[D]: Pipe created.\n"); }
 
-    if (!ConnectNamedPipe(hPipe, NULL))
-    {
-        printf("[E]: main: ConnectNamedPipe failed. Line = %d  \
-            GetLastError = %d\n", __LINE__, GetLastError());
-        CloseHandle(hPipe);
-        return false;
-    }
-
-    return true;
-}
-
-void ReleaseResourcesAssociatedWithTargetProcess(LPVOID& ptrAllocatedInOtherProcessMemory,HANDLE& hTargetProcess)
-{
-    VirtualFreeEx(hTargetProcess, ptrAllocatedInOtherProcessMemory, 0, MEM_RELEASE);
-    CloseHandle(hTargetProcess);
-}
-
-int main(int argc, char* argv[])
-{ 
-    DWORD targetProcessPid = 0;
-    enum class ProgrammMode programmMode;
-    string functionName = "";
-    string fileName = "";
-    if (!SanitizeAndProcessCmdArgs(argc, argv, 
-                                   targetProcessPid, programmMode, functionName, fileName))
-    {
-        return 0;
-    }
-
     LPVOID ptrAllocatedInOtherProcessMemory = NULL;
     HANDLE hTargetProcess = INVALID_HANDLE_VALUE;
     if (!InjectDll(targetProcessPid, ptrAllocatedInOtherProcessMemory, hTargetProcess))
@@ -285,11 +269,12 @@ int main(int argc, char* argv[])
         CloseHandle(hPipe);
         return 0;
     }
-
-    HANDLE hPipe;
-    LPCTSTR pipeName = PIPE_NAME;
-    if (!EstablishConnectionWithInjectionDll(hPipe, pipeName))
+ 
+    if (!ConnectNamedPipe(hPipe, NULL))
     {
+        printf("[E]: main: ConnectNamedPipe failed. Line = %d  \
+            GetLastError = %d\n", __LINE__, GetLastError());
+        CloseHandle(hPipe);
         ReleaseResourcesAssociatedWithTargetProcess(hTargetProcess, ptrAllocatedInOtherProcessMemory);
         return 0;
     }
@@ -298,7 +283,24 @@ int main(int argc, char* argv[])
 
     printf("[*] Injection.dll connected to Monitor.exe via pipe.\n");
 
+    BYTE pipeBuf[PIPE_BUFFER_SIZE] = { 0 };
+    memcpy(pipeBuf, &programmMode, sizeof(programmMode));
+    if (programmMode == ProgrammMode::kTrackCallOfFunction)
+    {
+        strcpy_s((char*)pipeBuf + sizeof(programmMode), PIPE_BUFFER_SIZE - sizeof(programmMode), functionName.c_str());
+    }
+    else // programmMode == ProgrammMode::kHideFileFromProcess
+    {
+        strcpy_s((char*)pipeBuf + sizeof(programmMode), PIPE_BUFFER_SIZE - sizeof(programmMode), fileName.c_str());
+    }
 
+    DWORD numberOfBytesSent;
+    if (!WriteFile(hPipe, pipeBuf, PIPE_BUFFER_SIZE, &numberOfBytesSent, NULL))
+    {
+        printf("[E]: main: WriteFile failed. Can't send arguments to the Injection.dll. Line = %d\n", __LINE__);
+        CloseHandle(hPipe);
+        return 0;
+    }
 
     CloseHandle(hPipe);
 
