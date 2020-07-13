@@ -114,7 +114,9 @@ bool InjectDll( IN DWORD targetProcessID,
     GetCurrentDirectoryA(sizeof(injectionDllFullPath), injectionDllFullPath);
     strcat(injectionDllFullPath, DLL_NAME);
 
-    if (ENABLE_DBG_MSG) { printf("[D]: Full path to injection dll = %s\n", injectionDllFullPath); }
+#ifdef _DEBUG
+    printf("[D]: Full path to injection dll = %s\n", injectionDllFullPath);
+#endif
 
     ptrAllocatedInOtherProcessMemory = (LPVOID)VirtualAllocEx(hTargetProcess, NULL,
         strlen(injectionDllFullPath) + 1, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
@@ -161,7 +163,10 @@ InjectDll_exit_routine:
     }
     if (isInjectionSuccessful)
     {
-        if (ENABLE_DBG_MSG) { printf("[D]: DLL is injected.\n"); }
+
+#ifdef _DEBUG
+        printf("[D]: DLL is injected.\n");
+#endif
         return true;
     }
     else
@@ -197,22 +202,27 @@ bool SanitizeAndProcessCmdArgs( IN int& argc, char**& argv,
         return false;
     }
 
-    if (ENABLE_DBG_MSG) { printf("[D]: Target process ID = %u\n", targetProcessPid); }
+#ifdef _DEBUG
+    printf("[D]: Target process ID = %u\n", targetProcessPid);
+#endif
 
     if (argv[3] == string("-func"))
     {
         programmMode = ProgrammMode::kTrackCallOfFunction;
         functionName = string(argv[4]);
 
-        if (ENABLE_DBG_MSG) { printf("[D]: Programm mode = kTrackCallOfFunction, function name = %s \n", functionName.c_str()); }
-
+#ifdef _DEBUG
+        printf("[D]: Programm mode = kTrackCallOfFunction, function name = %s \n", functionName.c_str());
+#endif
     }
     else if (argv[3] == string("-hide"))
     {
         programmMode = ProgrammMode::kHideFileFromProcess;
         fileName = string(argv[4]);
 
-        if (ENABLE_DBG_MSG) { printf("[D]: Programm mode = hideFileFromProcess, file name = %s \n", fileName.c_str()); }
+#ifdef _DEBUG
+        printf("[D]: Programm mode = hideFileFromProcess, file name = %s \n", fileName.c_str());
+#endif
     }
     else
     {
@@ -259,7 +269,9 @@ int main(int argc, char* argv[])
         return false;
     }
 
-    if (ENABLE_DBG_MSG) { printf("[D]: Pipe created.\n"); }
+#ifdef _DEBUG
+    printf("[D]: Pipe created.\n");
+#endif
 
     LPVOID ptrAllocatedInOtherProcessMemory = NULL;
     HANDLE hTargetProcess = INVALID_HANDLE_VALUE;
@@ -300,6 +312,25 @@ int main(int argc, char* argv[])
         printf("[E]: main: WriteFile failed. Can't send arguments to the Injection.dll. Line = %d\n", __LINE__);
         CloseHandle(hPipe);
         return 0;
+    }
+
+    if (programmMode == ProgrammMode::kTrackCallOfFunction)
+    {
+        while (1)
+        {
+            DWORD numberOfBytesRead;
+            memset(pipeBuf, 0, PIPE_BUFFER_SIZE);
+            if (ReadFile(hPipe, pipeBuf, PIPE_BUFFER_SIZE, &numberOfBytesRead, NULL))
+            {
+                printf("[*] Message from Injection.dll: \"%s is called (%s)\"\n", functionName.c_str(), (char*)pipeBuf);
+            }
+            else
+            {
+                printf("[E] DllMain: ReadFile() failed, GetLastError() = %d, line = %d\n", GetLastError(), __LINE__);
+                CloseHandle(hPipe);
+                return 0;
+            }  
+        }
     }
 
     CloseHandle(hPipe);

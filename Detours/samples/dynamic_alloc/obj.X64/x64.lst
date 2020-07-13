@@ -1,0 +1,51 @@
+Microsoft (R) Macro Assembler (x64) Version 14.26.28806.0   07/11/20 19:25:31
+x64.asm							     Page 1 - 1
+
+
+				;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+				;;
+				;;  Detours Test Program
+				;;
+				;;  Microsoft Research Detours Package
+				;;
+				;;  Copyright (c) Microsoft Corporation.  All rights reserved.
+				;;
+				PUBLIC CodeTemplate
+				PUBLIC CodeTemplate_End
+				
+ 00000000			_TEXT SEGMENT
+				
+ 00000000			CodeTemplate PROC
+ 00000000  90			  nop
+ 00000001  90			  nop
+ 00000002  48/ B8		  mov rax, 0deadbeef00000000h
+	   DEADBEEF00000000
+ 0000000C  90			  nop
+ 0000000D  C3			  ret
+ 0000000E			CodeTemplate_End::
+ 0000000E			CodeTemplate ENDP
+				
+ 0000000E			_TEXT ENDS
+				
+				END
+Microsoft (R) Macro Assembler (x64) Version 14.26.28806.0   07/11/20 19:25:31
+x64.asm							     Symbols 2 - 1
+
+
+
+
+Procedures, parameters, and locals:
+
+                N a m e                 Type     Value    Attr
+
+CodeTemplate . . . . . . . . . .	P 	 00000000 _TEXT	Length= 0000000E Public
+
+
+Symbols:
+
+                N a m e                 Type     Value    Attr
+
+CodeTemplate_End . . . . . . . .	L 	 0000000E _TEXT	Public
+
+	   0 Warnings
+	   0 Errors

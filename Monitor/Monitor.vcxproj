@@ -130,6 +130,7 @@ rmdir "$(SolutionDir)Debug"</Command>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <OutputFile>$(SolutionDir)Obj\$(TargetName)$(TargetExt)</OutputFile>
       <ProgramDatabaseFile>$(SolutionDir)Obj\$(TargetName).pdb</ProgramDatabaseFile>
+      <AdditionalDependencies>D:\Activities\University\6 semester\ToDoMS\Lab_2_Monitoring_events_in_processes\Hook-Inject\Detours\lib.X64\detours.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Command>IF not exist "$(Solutiondir)App\" (mkdir "$(Solutiondir)App\")
@@ -182,6 +183,7 @@ rmdir "$(SolutionDir)Debug"</Command>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <OutputFile>$(SolutionDir)Obj\$(TargetName)$(TargetExt)</OutputFile>
       <ProgramDatabaseFile>$(SolutionDir)Obj\$(TargetName).pdb</ProgramDatabaseFile>
+      <AdditionalDependencies>D:\Activities\University\6 semester\ToDoMS\Lab_2_Monitoring_events_in_processes\Hook-Inject\Detours\lib.X64\detours.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Command>IF not exist "$(Solutiondir)App\" (mkdir "$(Solutiondir)App\")
