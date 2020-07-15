@@ -9,12 +9,16 @@
 #include "../Detours/include/detours.h"
 #include "../Hook-Inject.h"
 
+using namespace std;
+
 extern "C" void hook();
-extern "C" LPVOID ptrTargetFunction = NULL;
+extern "C" LPVOID ptrTargetFunctionToTrack = NULL;
+
+string strFileToHide;
 
 HANDLE hPipe;
 
-using namespace std;
+decltype(CreateFileW)* CreateFileW_trampoline;
 
 string ExplainDetourError(LONG detourErrorCode)
 {
@@ -84,7 +88,7 @@ bool EstablishConnectionWithMonitor( IN LPCSTR pipeName)
     return true;
 }
 
-void LogTargetFunctionCall()
+extern "C" void LogTargetFunctionCall()
 {
     BYTE pipeBuf[PIPE_BUFFER_SIZE] = { 0 };
 
@@ -105,23 +109,17 @@ void LogTargetFunctionCall()
     }
 }
 
-extern "C" void InjectionFunction()
+bool InjectFunction(string dllName, string functionToDetourName, LPVOID injectionFunction, LPVOID& ptrTargetFunction)
 {
-    LogTargetFunctionCall();
-}
+#ifdef _DEBUG
+    printf("[D] Detouring \"%s\" from \"%s\".\n", functionToDetourName.c_str(), dllName.c_str());
+#endif
 
-bool HideFile()
-{
-    return false;
-}
-
-bool TrackFuncCall(string& funcName)
-{
-    ptrTargetFunction = DetourFindFunction("kernel32.dll", funcName.c_str());
+    ptrTargetFunction = DetourFindFunction(dllName.c_str(), functionToDetourName.c_str());
     if (ptrTargetFunction == NULL)
     {
 #ifdef _DEBUG
-        printf("[E] TrackFuncCall: DetourFindFunction() failed, line = %d\n", __LINE__);
+        printf("[E] InjectFunction: DetourFindFunction() failed, line = %d\n", __LINE__);
 #endif
         return false;
     }
@@ -130,7 +128,7 @@ bool TrackFuncCall(string& funcName)
     if (detourErrorCode != NO_ERROR)
     {
 #ifdef _DEBUG
-        printf("[E] TrackFuncCall: DetourTransactionBegin() failed, detour error = \"%s\", line = %d\n", (ExplainDetourError(detourErrorCode)).c_str(), __LINE__);
+        printf("[E] InjectFunction: DetourTransactionBegin() failed, detour error = \"%s\", line = %d\n", (ExplainDetourError(detourErrorCode)).c_str(), __LINE__);
 #endif
         DetourTransactionAbort();
         return false;
@@ -140,7 +138,7 @@ bool TrackFuncCall(string& funcName)
     if (detourErrorCode != NO_ERROR)
     {
 #ifdef _DEBUG
-        printf("[E] TrackFuncCall: DetourUpdateThread() failed, detour error = \"%s\", line = %d\n", (ExplainDetourError(detourErrorCode)).c_str(), __LINE__);
+        printf("[E] InjectFunction: DetourUpdateThread() failed, detour error = \"%s\", line = %d\n", (ExplainDetourError(detourErrorCode)).c_str(), __LINE__);
 #endif
         DetourTransactionAbort();
         return false;
@@ -153,11 +151,11 @@ bool TrackFuncCall(string& funcName)
     PDETOUR_TRAMPOLINE pRealTrampoline;
     PVOID pRealTarget;
     PVOID pRealDetour;
-    detourErrorCode = DetourAttachEx((PVOID*)&ptrTargetFunction, hook, &pRealTrampoline, &pRealTarget, &pRealDetour);
+    detourErrorCode = DetourAttachEx((PVOID*)&ptrTargetFunction, injectionFunction, &pRealTrampoline, &pRealTarget, &pRealDetour);
     if (detourErrorCode != NO_ERROR)
     {
 #ifdef _DEBUG
-        printf("[E] TrackFuncCall: DetourAttach() failed, detour error = \"%s\", line = %d\n", (ExplainDetourError(detourErrorCode)).c_str(), __LINE__);
+        printf("[E] InjectFunction: DetourAttach() failed, detour error = \"%s\", line = %d\n", (ExplainDetourError(detourErrorCode)).c_str(), __LINE__);
 #endif
         DetourTransactionAbort();
         return false;
@@ -174,10 +172,77 @@ bool TrackFuncCall(string& funcName)
     if (detourErrorCode != NO_ERROR)
     {
 #ifdef _DEBUG
-        printf("[E] TrackFuncCall: DetourTransactionCommit() failed, detour error = \"%s\", line = %d\n", (ExplainDetourError(detourErrorCode)).c_str(), __LINE__);
+        printf("[E] InjectFunction: DetourTransactionCommit() failed, detour error = \"%s\", line = %d\n", (ExplainDetourError(detourErrorCode)).c_str(), __LINE__);
 #endif
         DetourTransactionAbort();
-        CloseHandle(hPipe);
+        return false;
+    }
+
+    return true;
+}
+
+HANDLE CreateFileW_detour (
+    LPCWSTR               lpFileName,
+    DWORD                 dwDesiredAccess,
+    DWORD                 dwShareMode,
+    LPSECURITY_ATTRIBUTES lpSecurityAttributes,
+    DWORD                 dwCreationDisposition,
+    DWORD                 dwFlagsAndAttributes,
+    HANDLE                hTemplateFile
+)
+{
+    wstring wstrFileNameToHide(strFileToHide.begin(), strFileToHide.end());
+    wstring wstrArgFileName(lpFileName);
+
+#ifdef _DEBUG
+    wprintf(L"[D] CreateFileW_detour: lpFileName = %s\n", lpFileName);
+#endif
+
+
+    if (wstrArgFileName.find(wstrFileNameToHide) == wstring::npos)
+    {
+        return CreateFileW_trampoline(
+            lpFileName,
+            dwDesiredAccess,
+            dwShareMode,
+            lpSecurityAttributes,
+            dwCreationDisposition,
+            dwFlagsAndAttributes,
+            hTemplateFile
+        );
+    }
+    else
+    {
+        return INVALID_HANDLE_VALUE;
+    }
+}
+
+bool HideFile(string& fileName)
+{
+    strFileToHide = fileName;
+
+    LPVOID ptrTargetFunction;
+    if (!InjectFunction("kernel32.dll", "CreateFileW", CreateFileW_detour, ptrTargetFunction))
+    {
+#ifdef _DEBUG
+        printf("[E] HideFile: InjectFunction() failed, line = %d\n", __LINE__);
+#endif
+        return false;
+    }
+    CreateFileW_trampoline = (decltype(CreateFileW_trampoline))ptrTargetFunction;
+
+    // Do ...
+
+    return true;
+}
+
+bool TrackFuncCall(string& funcName)
+{
+    if (!InjectFunction("kernel32.dll", funcName.c_str(), hook, ptrTargetFunctionToTrack))
+    {
+#ifdef _DEBUG
+        printf("[E] TrackFuncCall: InjectFunction() failed, line = %d\n", __LINE__);
+#endif
         return false;
     }
 
@@ -245,7 +310,14 @@ BOOL APIENTRY DllMain(HMODULE hModule,
 
         if (programmMode == ProgrammMode::kHideFileFromProcess)
         {
-            // DO
+            if (!HideFile(fileOrFunctionName))
+            {
+#ifdef _DEBUG
+                printf("[E] DllMain: HideFile() failed, line = %d\n", __LINE__);
+#endif
+                CloseHandle(hPipe);
+                return false;
+            }
         }
         else if (programmMode == ProgrammMode::kTrackCallOfFunction)
         {

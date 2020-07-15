@@ -78,17 +78,16 @@ bool GetProccessID(string processName, DWORD& processId)
 
 void ReleaseResourcesAssociatedWithTargetProcess(LPVOID& ptrAllocatedInOtherProcessMemory, HANDLE& hTargetProcess)
 {
-    // Doesn't work but why?
-    //if (!VirtualFreeEx(hTargetProcess, ptrAllocatedInOtherProcessMemory, 0, MEM_RELEASE))
-    //{
-    //    printf("[E]: ReleaseResourcesAssociatedWithTargetProcess: VirtualFreeEx failed. Line = %d, \
-    //        GetLastError = %d\n", __LINE__, GetLastError());
-    //}
-    //if (!CloseHandle(hTargetProcess))
-    //{
-    //    printf("[E]: ReleaseResourcesAssociatedWithTargetProcess: CloseHandle failed. Line = %d, \
-    //        GetLastError = %d\n", __LINE__, GetLastError());
-    //}
+    if (!VirtualFreeEx(hTargetProcess, ptrAllocatedInOtherProcessMemory, 0, MEM_RELEASE))
+    {
+        printf("[E]: ReleaseResourcesAssociatedWithTargetProcess: VirtualFreeEx failed. Line = %d, \
+            GetLastError = %d\n", __LINE__, GetLastError());
+    }
+    if (!CloseHandle(hTargetProcess))
+    {
+        printf("[E]: ReleaseResourcesAssociatedWithTargetProcess: CloseHandle failed. Line = %d, \
+            GetLastError = %d\n", __LINE__, GetLastError());
+    }
 }
 
 bool InjectDll( IN DWORD targetProcessID, 
@@ -303,11 +302,11 @@ int main(int argc, char* argv[])
         printf("[E]: main: ConnectNamedPipe failed. Line = %d  \
             GetLastError = %d\n", __LINE__, GetLastError());
         CloseHandle(hPipe);
-        ReleaseResourcesAssociatedWithTargetProcess(hTargetProcess, ptrAllocatedInOtherProcessMemory);
+        ReleaseResourcesAssociatedWithTargetProcess(ptrAllocatedInOtherProcessMemory, hTargetProcess);
         return 0;
     }
 
-    ReleaseResourcesAssociatedWithTargetProcess(hTargetProcess, ptrAllocatedInOtherProcessMemory);
+    ReleaseResourcesAssociatedWithTargetProcess(ptrAllocatedInOtherProcessMemory, hTargetProcess);
 
     printf("[*] Injection.dll connected to Monitor.exe via pipe.\n");
 

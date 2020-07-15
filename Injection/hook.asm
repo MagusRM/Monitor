@@ -1,7 +1,7 @@
 _TEXT	SEGMENT
  
-EXTERN InjectionFunction: PROC
-EXTERN ptrTargetFunction: qword
+EXTERN LogTargetFunctionCall: PROC
+EXTERN ptrTargetFunctionToTrack: qword
 
 hook PROC
     push rsp
@@ -19,7 +19,7 @@ hook PROC
     push r13
     push r14
     push r15
-    call InjectionFunction
+    call LogTargetFunctionCall
     pop r15
     pop r14
     pop r13
@@ -35,7 +35,7 @@ hook PROC
     pop rcx
     pop rbx
     pop rsp
-    mov rax, ptrTargetFunction
+    mov rax, ptrTargetFunctionToTrack
     push rax
     ret
 
