@@ -76,6 +76,21 @@ bool GetProccessID(string processName, DWORD& processId)
     return true;
 }
 
+void ReleaseResourcesAssociatedWithTargetProcess(LPVOID& ptrAllocatedInOtherProcessMemory, HANDLE& hTargetProcess)
+{
+    // Doesn't work but why?
+    //if (!VirtualFreeEx(hTargetProcess, ptrAllocatedInOtherProcessMemory, 0, MEM_RELEASE))
+    //{
+    //    printf("[E]: ReleaseResourcesAssociatedWithTargetProcess: VirtualFreeEx failed. Line = %d, \
+    //        GetLastError = %d\n", __LINE__, GetLastError());
+    //}
+    //if (!CloseHandle(hTargetProcess))
+    //{
+    //    printf("[E]: ReleaseResourcesAssociatedWithTargetProcess: CloseHandle failed. Line = %d, \
+    //        GetLastError = %d\n", __LINE__, GetLastError());
+    //}
+}
+
 bool InjectDll( IN DWORD targetProcessID, 
                 OUT LPVOID& ptrAllocatedInOtherProcessMemory, HANDLE& hTargetProcess)
 {
@@ -148,10 +163,17 @@ bool InjectDll( IN DWORD targetProcessID,
 
 InjectDll_exit_routine:
 
-    if ((ptrAllocatedInOtherProcessMemory != NULL) && (!isInjectionSuccessful))
+    if (!isInjectionSuccessful)
     {
-        VirtualFreeEx(hTargetProcess, ptrAllocatedInOtherProcessMemory, 0,
-            MEM_RELEASE);
+        if (ptrAllocatedInOtherProcessMemory != NULL)
+        {
+            VirtualFreeEx(hTargetProcess, ptrAllocatedInOtherProcessMemory, 0,
+                MEM_RELEASE);
+        }
+        if (hTargetProcess != NULL)
+        {
+            CloseHandle(hTargetProcess);
+        }
     }
     if (h_kernel32dll != INVALID_HANDLE_VALUE)
     {
@@ -159,8 +181,9 @@ InjectDll_exit_routine:
     }
     if (hThreadID != INVALID_HANDLE_VALUE)
     {
-        FreeLibrary(h_kernel32dll);
+        CloseHandle(hThreadID);
     }
+
     if (isInjectionSuccessful)
     {
 
@@ -233,13 +256,6 @@ bool SanitizeAndProcessCmdArgs( IN int& argc, char**& argv,
     return true;
 }
 
-
-void ReleaseResourcesAssociatedWithTargetProcess(LPVOID& ptrAllocatedInOtherProcessMemory,HANDLE& hTargetProcess)
-{
-    // Doesn't work but why?
-    /*VirtualFreeEx(hTargetProcess, ptrAllocatedInOtherProcessMemory, 0, MEM_RELEASE);
-    CloseHandle(hTargetProcess);*/
-}
 
 int main(int argc, char* argv[])
 { 

@@ -150,7 +150,10 @@ bool TrackFuncCall(string& funcName)
     printf("[D] Before DetourAttach: ptrTargetFunction = %p\n", ptrTargetFunction);
 #endif
 
-    detourErrorCode = DetourAttach((PVOID*)&ptrTargetFunction, hook);
+    PDETOUR_TRAMPOLINE pRealTrampoline;
+    PVOID pRealTarget;
+    PVOID pRealDetour;
+    detourErrorCode = DetourAttachEx((PVOID*)&ptrTargetFunction, hook, &pRealTrampoline, &pRealTarget, &pRealDetour);
     if (detourErrorCode != NO_ERROR)
     {
 #ifdef _DEBUG
@@ -162,6 +165,9 @@ bool TrackFuncCall(string& funcName)
 
 #ifdef _DEBUG
     printf("[D] After DetourAttach: ptrTargetFunction = %p\n", ptrTargetFunction);
+    printf("[D] \t pRealTrampoline = %p\n", pRealTrampoline);
+    printf("[D] \t pRealTarget = %p\n", pRealTarget);
+    printf("[D] \t pRealDetour = %p\n", pRealDetour);
 #endif
 
     detourErrorCode = DetourTransactionCommit();
