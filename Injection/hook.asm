@@ -1,7 +1,7 @@
 _TEXT	SEGMENT
  
 EXTERN LogTargetFunctionCall: PROC
-EXTERN ptrTargetFunctionToTrack: qword
+EXTERN ptrTargetFunctionToTrackTrampoline: qword
 
 hook PROC
     push rsp
@@ -35,7 +35,7 @@ hook PROC
     pop rcx
     pop rbx
     pop rsp
-    mov rax, ptrTargetFunctionToTrack
+    mov rax, ptrTargetFunctionToTrackTrampoline
     push rax
     ret
 
