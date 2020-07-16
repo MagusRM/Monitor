@@ -1,4 +1,4 @@
-Note: if target program runs under administrator then you should run Monitor.exe under adminitrator.
+IMPORTANT note: If target program runs under administrator then you should run Monitor.exe under adminitrator. And vice versa! (Both programms should be ran in the same mode (user or administrator))
 
 Note: It is assumed that injection.dll is located in the same place with Monitor.exe.
 

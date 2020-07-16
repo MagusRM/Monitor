@@ -349,4 +349,7 @@ App/
 Obj/
 Injection.dll
 
+Detours/samples/
+Detours/bin*
+
 # ----------------------- My .gitignore end -----------------------------------------------------
