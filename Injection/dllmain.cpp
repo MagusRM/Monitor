@@ -11,11 +11,9 @@
 
 using namespace std;
 
-extern "C" void hook();
 extern "C" LPVOID ptrTargetFunctionToTrackTrampoline = NULL;
 
 string strFileToHide;
-
 HANDLE hPipe;
 
 decltype(CreateFileW)* CreateFileW_trampoline;
@@ -26,6 +24,8 @@ decltype(FindNextFileW)* FindNextFileW_trampoline;
 decltype(FindNextFileA)* FindNextFileA_trampoline;
 decltype(FindFirstFileExW)* FindFirstFileExW_trampoline;
 decltype(FindFirstFileExA)* FindFirstFileExA_trampoline;
+
+extern "C" void hook();
 
 string ExplainDetourError(LONG detourErrorCode)
 {

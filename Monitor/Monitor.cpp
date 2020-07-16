@@ -93,7 +93,7 @@ void ReleaseResourcesAssociatedWithTargetProcess(LPVOID& ptrAllocatedInOtherProc
 bool InjectDll( IN DWORD targetProcessID, 
                 OUT LPVOID& ptrAllocatedInOtherProcessMemory, HANDLE& hTargetProcess)
 {
-    HANDLE hThreadID = INVALID_HANDLE_VALUE;
+    HANDLE hThreadID = NULL;
     HMODULE h_kernel32dll = NULL;
     LPVOID ptrLoadLibraryA = NULL;
     bool isInjectionSuccessful = false;
@@ -174,11 +174,11 @@ InjectDll_exit_routine:
             CloseHandle(hTargetProcess);
         }
     }
-    if (h_kernel32dll != INVALID_HANDLE_VALUE)
+    if (h_kernel32dll != NULL)
     {
         FreeLibrary(h_kernel32dll);
     }
-    if (hThreadID != INVALID_HANDLE_VALUE)
+    if (hThreadID != NULL)
     {
         CloseHandle(hThreadID);
     }
@@ -254,7 +254,6 @@ bool SanitizeAndProcessCmdArgs( IN int& argc, char**& argv,
 
     return true;
 }
-
 
 int main(int argc, char* argv[])
 { 
