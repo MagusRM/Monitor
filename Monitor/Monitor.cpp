@@ -257,6 +257,10 @@ bool SanitizeAndProcessCmdArgs( IN int& argc, char**& argv,
 
 int main(int argc, char* argv[])
 { 
+    printf("\n!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
+    printf("Both processes (target and Monitor.exe) should be ran in the same mode (user or administrator).\n");
+    printf("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
+
     DWORD targetProcessPid = 0;
     enum class ProgrammMode programmMode;
     string functionName = "";
