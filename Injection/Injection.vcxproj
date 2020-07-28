@@ -75,21 +75,25 @@
     <LinkIncremental>true</LinkIncremental>
     <OutDir>$(SolutionDir)$(Configuration)</OutDir>
     <IntDir>$(Configuration)</IntDir>
+    <LibraryPath>$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
     <OutDir>$(SolutionDir)$(Configuration)</OutDir>
     <IntDir>$(Configuration)</IntDir>
+    <LibraryPath>$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
     <OutDir>$(SolutionDir)$(Configuration)</OutDir>
     <IntDir>$(Configuration)</IntDir>
+    <LibraryPath>$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
     <OutDir>$(SolutionDir)$(Configuration)</OutDir>
     <IntDir>$(Configuration)</IntDir>
+    <LibraryPath>$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -106,14 +110,20 @@
       <EnableUAC>false</EnableUAC>
       <OutputFile>$(SolutionDir)Obj\$(TargetName)$(TargetExt)</OutputFile>
       <ProgramDatabaseFile>$(SolutionDir)Obj\$(TargetName).pdb</ProgramDatabaseFile>
+      <AdditionalLibraryDirectories>D:\Activities\University\6 semester\ToDoMS\Lab_2_Monitoring_events_in_processes\Hook-Inject\Detours\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>Detours.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Command>IF not exist "$(Solutiondir)App\" (mkdir "$(Solutiondir)App\")
 copy "$(SolutionDir)Obj\$(TargetName)$(TargetExt)" "$(SolutionDir)App\"
 copy  "$(SolutionDir)App\$(TargetName)$(TargetExt)" "$(SolutionDir)Monitor\$(TargetName)$(TargetExt)"
-rmdir "$(SolutionDir)Release"
-rmdir "$(SolutionDir)Debug"</Command>
+rmdir /s /q "$(SolutionDir)Release"
+rmdir /s /q "$(SolutionDir)Debug"</Command>
     </PostBuildEvent>
+    <PreBuildEvent>
+      <Command>
+      </Command>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -130,15 +140,20 @@ rmdir "$(SolutionDir)Debug"</Command>
       <EnableUAC>false</EnableUAC>
       <OutputFile>$(SolutionDir)Obj\$(TargetName)$(TargetExt)</OutputFile>
       <ProgramDatabaseFile>$(SolutionDir)Obj\$(TargetName).pdb</ProgramDatabaseFile>
-      <AdditionalDependencies>D:\Activities\University\6 semester\ToDoMS\Lab_2_Monitoring_events_in_processes\Hook-Inject\Detours\lib.X64\detours.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Detours.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>D:\Activities\University\6 semester\ToDoMS\Lab_2_Monitoring_events_in_processes\Hook-Inject\Detours\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
       <Command>IF not exist "$(Solutiondir)App\" (mkdir "$(Solutiondir)App\")
 copy "$(SolutionDir)Obj\$(TargetName)$(TargetExt)" "$(SolutionDir)App\"
 copy  "$(SolutionDir)App\$(TargetName)$(TargetExt)" "$(SolutionDir)Monitor\$(TargetName)$(TargetExt)"
-rmdir "$(SolutionDir)Release"
-rmdir "$(SolutionDir)Debug"</Command>
+rmdir /s /q "$(SolutionDir)Release"
+rmdir /s /q "$(SolutionDir)Debug"</Command>
     </PostBuildEvent>
+    <PreBuildEvent>
+      <Command>
+      </Command>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -159,14 +174,20 @@ rmdir "$(SolutionDir)Debug"</Command>
       <EnableUAC>false</EnableUAC>
       <OutputFile>$(SolutionDir)Obj\$(TargetName)$(TargetExt)</OutputFile>
       <ProgramDatabaseFile>$(SolutionDir)Obj\$(TargetName).pdb</ProgramDatabaseFile>
+      <AdditionalLibraryDirectories>D:\Activities\University\6 semester\ToDoMS\Lab_2_Monitoring_events_in_processes\Hook-Inject\Detours\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>Detours.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Command>IF not exist "$(Solutiondir)App\" (mkdir "$(Solutiondir)App\")
 copy "$(SolutionDir)Obj\$(TargetName)$(TargetExt)" "$(SolutionDir)App\"
 copy  "$(SolutionDir)App\$(TargetName)$(TargetExt)" "$(SolutionDir)Monitor\$(TargetName)$(TargetExt)"
-rmdir "$(SolutionDir)Release"
-rmdir "$(SolutionDir)Debug"</Command>
+rmdir /s /q "$(SolutionDir)Release"
+rmdir /s /q "$(SolutionDir)Debug"</Command>
     </PostBuildEvent>
+    <PreBuildEvent>
+      <Command>
+      </Command>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -187,15 +208,20 @@ rmdir "$(SolutionDir)Debug"</Command>
       <EnableUAC>false</EnableUAC>
       <OutputFile>$(SolutionDir)Obj\$(TargetName)$(TargetExt)</OutputFile>
       <ProgramDatabaseFile>$(SolutionDir)Obj\$(TargetName).pdb</ProgramDatabaseFile>
-      <AdditionalDependencies>D:\Activities\University\6 semester\ToDoMS\Lab_2_Monitoring_events_in_processes\Hook-Inject\Detours\lib.X64\detours.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>Detours.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>D:\Activities\University\6 semester\ToDoMS\Lab_2_Monitoring_events_in_processes\Hook-Inject\Detours\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
     <PostBuildEvent>
       <Command>IF not exist "$(Solutiondir)App\" (mkdir "$(Solutiondir)App\")
 copy "$(SolutionDir)Obj\$(TargetName)$(TargetExt)" "$(SolutionDir)App\"
 copy  "$(SolutionDir)App\$(TargetName)$(TargetExt)" "$(SolutionDir)Monitor\$(TargetName)$(TargetExt)"
-rmdir "$(SolutionDir)Release"
-rmdir "$(SolutionDir)Debug"</Command>
+rmdir /s /q "$(SolutionDir)Release"
+rmdir /s /q "$(SolutionDir)Debug"</Command>
     </PostBuildEvent>
+    <PreBuildEvent>
+      <Command>
+      </Command>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp" />

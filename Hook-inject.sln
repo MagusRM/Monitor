@@ -7,8 +7,10 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Monitor", "Monitor\Monitor.
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Injection", "Injection\Injection.vcxproj", "{9F4C85DE-9C4E-4814-BFC4-6B6B3FFB7A36}"
 	ProjectSection(ProjectDependencies) = postProject
-		{1CA9B21D-5915-455E-9A80-FF65416D348B} = {1CA9B21D-5915-455E-9A80-FF65416D348B}
+		{E1F551DB-ADE4-432B-A605-A13EA41BF641} = {E1F551DB-ADE4-432B-A605-A13EA41BF641}
 	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Detours", "Detours\Detours.vcxproj", "{E1F551DB-ADE4-432B-A605-A13EA41BF641}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -34,6 +36,14 @@ Global
 		{9F4C85DE-9C4E-4814-BFC4-6B6B3FFB7A36}.Release|x64.Build.0 = Release|x64
 		{9F4C85DE-9C4E-4814-BFC4-6B6B3FFB7A36}.Release|x86.ActiveCfg = Release|Win32
 		{9F4C85DE-9C4E-4814-BFC4-6B6B3FFB7A36}.Release|x86.Build.0 = Release|Win32
+		{E1F551DB-ADE4-432B-A605-A13EA41BF641}.Debug|x64.ActiveCfg = Debug|x64
+		{E1F551DB-ADE4-432B-A605-A13EA41BF641}.Debug|x64.Build.0 = Debug|x64
+		{E1F551DB-ADE4-432B-A605-A13EA41BF641}.Debug|x86.ActiveCfg = Debug|Win32
+		{E1F551DB-ADE4-432B-A605-A13EA41BF641}.Debug|x86.Build.0 = Debug|Win32
+		{E1F551DB-ADE4-432B-A605-A13EA41BF641}.Release|x64.ActiveCfg = Release|x64
+		{E1F551DB-ADE4-432B-A605-A13EA41BF641}.Release|x64.Build.0 = Release|x64
+		{E1F551DB-ADE4-432B-A605-A13EA41BF641}.Release|x86.ActiveCfg = Release|Win32
+		{E1F551DB-ADE4-432B-A605-A13EA41BF641}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

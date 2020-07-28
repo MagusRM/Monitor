@@ -353,3 +353,4 @@ Detours/samples/
 Detours/bin*
 
 # ----------------------- My .gitignore end -----------------------------------------------------
+/Detours/lib

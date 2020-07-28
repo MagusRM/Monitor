@@ -6,7 +6,7 @@
 #include <string>
 #include <cstdio>
 
-#include "../Detours/include/detours.h"
+#include "../Detours/detours.h"
 #include "../Hook-Inject.h"
 
 using namespace std;
