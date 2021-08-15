@@ -1,4 +1,4 @@
-Project repository: https://github.com/MagusRM/Hook-Inject
+Project repository: https://github.com/rdruzhkov/Hook-Inject
 
 Comment: 
 This is solvation for one of my university's tasks. Shortened task statement: 
